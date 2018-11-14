@@ -1,5 +1,5 @@
 /*
-* vmOnScreen() 2.0.0
+* vmOnScreen() 2.0.1
 *
 * Copyright 2018
 *
@@ -30,6 +30,20 @@
 			percent: 0.75
 		}, options);
 
+		function iOSversion() {
+			if (/iP(hone|od|ad)/.test(navigator.platform)) {
+				var v = (navigator.appVersion).match(/OS (\d+)_(\d+)_?(\d+)?/);
+				return [parseInt(v[1], 10), parseInt(v[2], 10), parseInt(v[3] || 0, 10)];
+			}
+		}
+
+		var appleDevice = iOSversion();
+		var oldAppleDevice = false;
+
+		if (appleDevice != undefined && appleDevice[0] < 11) { 
+			oldAppleDevice = true;
+		}
+
 		var items = this;
 		var animOffset = $(window).height() * options.percent;
 
@@ -56,23 +70,41 @@
 			});
 		}
 
-		anim();
+		function oldAnim() {
+			yPos = window.scrollY;
+			$(items).each(function() {
+				var animStart = $(window).height() * options.percent;
+				var top = $(window).scrollTop();
+				if (top > ($(this).offset().top - animStart)) {
+					if (this.watchDown) {
+						$(this).addClass('vm-onscreen');
+						this.watchDown = false;
+					}
+				}
+			});
+		}
+
+		(oldAppleDevice) ? oldAnim() : anim();
 
 		var vmThrottle = 4;
-		var scrollTimer;
-		$(window).scroll(function() {
-			// attempted Opera Mini workaround. force the animation after scrolling
-			clearTimeout(scrollTimer);
-			scrollTimer = setTimeout(function() {
-				anim();
-			}, 1000);
-			vmThrottle++;
-			if (vmThrottle === 5) {
-				anim();
-				vmThrottle = 0;
-			}
-		});
 
+		if (oldAppleDevice) {
+			$(window).scroll(function() {
+				vmThrottle++;
+				if (vmThrottle === 5) {
+					oldAnim();
+					vmThrottle = 0;
+				}
+			});
+		} else {
+			$(window).scroll(function() {
+				vmThrottle++;
+				if (vmThrottle === 5) {
+					anim();
+					vmThrottle = 0;
+				}
+			});
+		}
 		var windowWidth = $(window).width();
 		var resizeTimer;
 		$(window).resize(function() {
@@ -84,7 +116,7 @@
 					($(window).scrollTop() === posCache)) {
 					windowWidth = newWindowWidth;
 					buildAnimObjects();
-					anim();
+					(oldAppleDevice) ? oldAnim : anim();
 				}
 			}, 200);
 		});
