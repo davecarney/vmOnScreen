@@ -1,5 +1,5 @@
 /*
-* vmOnScreen() 1.0.0
+* vmOnScreen() 2.0.0
 *
 * Copyright 2018
 *
@@ -7,28 +7,19 @@
 * Scroll Watching plugin
 * 
 * 	activate with:
-* 		$('.vm-anim').vmOnScreen();
+* 		$('SOME_ELEMENT').vmOnScreen();
 *
-* 	watches for elements with class:
-*		.vm-anim
-*
-* 	switches class:
-* 		.vm-anim to .vm-onscreen
-*		Target those classes to do whatever you need.
+* 	adds class:
+* 		.vm-onscreen
+*		Target that class to do whatever you need.
 *
 *	changing defaults:
 *		the function is set to fire when the element is at 0.75 of the screen.
 *		pass a different percentage to the percent: property to change this (example below)
 *
-*		You can overide the element to watch for by passing something else to the jQuery object
-*		but you must also pass that same element(without the . or #) to the watching property
-*
 *			$('.some-other-class').vmOnScreen({
-*				watching: 'some-other-class',
 *				percent: 0.5
 *			});
-*
-*		Use this approach if you want different elements to animate at different percentages
 *
 */
 
@@ -36,33 +27,66 @@
 	$.fn.vmOnScreen = function(options) {
 
 		options = $.extend({
-			percent: 0.75,
-			watching: 'vm-anim'
+			percent: 0.75
 		}, options);
 
-		var item = this;
+		var items = this;
+		var animOffset = $(window).height() * options.percent;
 
-		function init() {
-			$(item).each(function() {
-				var animStart = $(window).height() * options.percent;
-				var top = $(window).scrollTop();
-				if (top > ($(this).offset().top - animStart)) {
-					$(this).removeClass(options.watching).addClass('vm-onscreen');
-					return;
+		function buildAnimObjects() {
+			items.each(function() {
+				this.itemPos = $(this).offset().top - animOffset;
+				this.watchDown = true;
+			});
+		}
+
+		buildAnimObjects();
+
+		var yPos = window.scrollY;
+		
+		function anim() {
+			yPos = window.scrollY;
+			items.each(function() {
+				if (this.itemPos < yPos) {
+					if (this.watchDown) {
+						$(this).addClass('vm-onscreen');
+						this.watchDown = false;			
+					}
 				}
 			});
 		}
 
-		init();
+		anim();
 
 		var vmThrottle = 4;
-
+		var scrollTimer;
 		$(window).scroll(function() {
+			// attempted Opera Mini workaround. force the animation after scrolling
+			clearTimeout(scrollTimer);
+			scrollTimer = setTimeout(function() {
+				anim();
+			}, 1000);
 			vmThrottle++;
 			if (vmThrottle === 5) {
-				init();
+				anim();
 				vmThrottle = 0;
 			}
+		});
+
+		var windowWidth = $(window).width();
+		var resizeTimer;
+		$(window).resize(function() {
+			var posCache = $(window).scrollTop();
+			clearTimeout(resizeTimer);
+			resizeTimer = setTimeout(function() {
+				var newWindowWidth = $(window).width();
+				if ((newWindowWidth !== windowWidth) ||
+					($(window).scrollTop() === posCache)) {
+					windowWidth = newWindowWidth;
+					buildAnimObjects();
+					anim();
+				}
+			}, 200);
 		});
 
 	};
