@@ -1,10 +1,10 @@
-# vmOnScreen v2.0.0 #
+# vmOnScreen v2.2.0 #
 
 ## Scroll Watching Plugin ##
 
 ### Activate With ###
 
-$('SOME_ELEMENT').vmOnScreen();
+$(document).vmOnScreen();
 
 ### Adds class: ###
 
@@ -27,16 +27,47 @@ SOME_ELEMENT.vm-onscreen {
 
 ### Changing defaults ###
 
-The function is set to fire when the element is at 0.75 of the screen.
-Pass a different percentage to the percent: property to change this.
+* The function is set to fire when .vm-anim is at 0.75 of the screen.
+* Pass an array of objects with parameters to the plugin to change the defaults.
+* Each object being a value of the array like so:
 
 ```
 
-$('.some-other-class').vmOnScreen({
-    percent: 0.5
-});
+$(document).vmOnScreen([
+	{
+		element: $('SOME_OTHER_ELEMENT'),
+		percent: 0.5
+	},
+	{
+		element: $('SOME_STICKY_ELEMENT'),
+		sticky: true,
+		threshold: {
+			up: 10,
+			down: 20
+		}
+	}
+]);
 
 ```
+
+### Default settings ###
+
+```
+element: $('.vm-anim'),
+percent: 0.75,
+sticky: false,
+stickyClass: 'sticky-vis',
+threshold: {
+	up: 5,
+	down: 10
+}
+```
+
+### Sticky Show/Hide ###
+
+* The plugin has "scroll down and hide", "scroll up and show" sticky header capability.
+* The "threshold" values are how many scrolls it takes to activate the show/hide.
+* You need to set both "up" and "down" if you are wanting to adjust those values.
 
 ### Dependencies ###
 jQuery 1.7
